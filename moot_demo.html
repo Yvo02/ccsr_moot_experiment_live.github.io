@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>CCSR Experiment 1</title>
+    <script src="https://unpkg.com/jspsych@7.3.1"></script>
+    <script src="https://unpkg.com/@jspsych/plugin-html-keyboard-response@1.1.2"></script>
+    <script src="https://unpkg.com/@jspsych/extension-record-video@1.0.1/dist/index.browser.js"></script>
+    <script src="https://unpkg.com/@jspsych/plugin-initialize-camera@1.0.1/dist/index.browser.js"></script>
+
+    <!-- NEU: lokales Plugin statt CDN-Version -->
+    <script src="jsPsych/mediapipe-extension/index.browser.js"></script>
+
+    <script src="https://unpkg.com/@jspsych/plugin-fullscreen@1.1.2"></script>
+    <script src="https://unpkg.com/@jspsych/plugin-html-slider-response@1.1.2"></script>
+    <script src="https://unpkg.com/@jspsych/plugin-preload@1.1.2"></script>
+    <script src="https://unpkg.com/@jspsych/plugin-video-keyboard-response@1.1.2"></script>
+    <script src="https://unpkg.com/@jspsych/plugin-survey-text@1.1.2"></script>
+    <script src="https://unpkg.com/@jspsych/plugin-html-button-response@1.1.2"></script>
+    <script src="jsPsych/plugin-nextcloud-filedrop.js"></script>
+    <script src="https://unpkg.com/jszip@3.10.1/dist/jszip.js"></script>
+    <script src="https://unpkg.com/@jspsych/plugin-call-function@1.1.2"></script>
+    <script src="https://unpkg.com/@jspsych/plugin-browser-check@1.0.2"></script>
+    <script src="jsPsych/extension-unity.js"></script>
+    <script src="jsPsych/plugin-moot.js"></script>
+    <script src="jsPsych/plugin-close-unity.js"></script>
+    <script src="jsPsych/plugin-calibration-camera.js"></script>
+    <script src="https://unpkg.com/@jspsych/plugin-image-keyboard-response@1.1.2"></script>
+    <script src="utils.js"></script>
+    <link href="https://unpkg.com/jspsych@7.3.1/css/jspsych.css" rel="stylesheet" type="text/css" />
+    <link href="experiment_1.css" rel="stylesheet" type="text/css" />
+</head>
+
+<body></body>
+
+<script>
+    // Zufällige Bedingungs-Parameter
+    var condition = {
+        targetpattern_squares: Math.random() < 0.5,
+        doppelgaenger_color_white: Math.random() < 0.5,
+        doppelgaenger_up: Math.random() < 0.5,
+        questionnaire_doppelgaenger_first: Math.random() < 0.5,
+    };
+
+    // Experimentkonfiguration
+    var experiment_config = {
+        record_doppelgaenger_animation: false,
+        record_other_animation: false,
+        record_mediapipe: true, // jetzt Mediapipe-Ergebnisse inkl. Blendshapes aufzeichnen
+    };
+
+    const jsPsych = initJsPsych({
+        extensions: [
+            {
+                type: jsPsychUnityExtension,
+                params: {
+                    loaderUrl: "./moot/build.loader.js",
+                    dataUrl: "./moot/build.data.unityweb",
+                    frameworkUrl: "./moot/build.framework.js.unityweb",
+                    codeUrl: "./moot/build.wasm.unityweb",
+                    width: "800px",
+                    height: "500px",
+                    waitEvent: 'JSPsychUnityReadyEvent'
+                }
+            },
+            {
+                type: jsPsychExtensionMediapipeFacemesh,
+                params: {
+                    useFaceLandmarker: true, // Neue API mit Blendshapes
+                    record: true              // Blendshape-Daten mitschreiben
+                }
+            },
+            { type: jsPsychExtensionRecordVideo },
+        ],
+        on_finish: function () {
+            jsPsych.data.displayData('json');
+            jsPsych.data.get().localSave('json', 'mydata.json');
+        }
+    });
+
+    // Allgemeine Properties
+    jsPsych.data.addProperties({
+        is_targetpattern_squares: condition.targetpattern_squares,
+        is_doppelgaenger_color_white: condition.doppelgaenger_color_white,
+        is_doppelgaenger_up: condition.doppelgaenger_up,
+        is_questionnaire_doppelgaenger_first: condition.questionnaire_doppelgaenger_first
+    });
+
+    const initCamera = {
+        type: jsPsychInitializeCamera,
+        include_audio: false
+    };
+
+    const enter_fullscreen = {
+        type: jsPsychFullscreen,
+        fullscreen_mode: true,
+        message: '<p>The experiment will switch to full screen mode...</p>',
+    };
+
+    const debug_condition = {
+        type: jsPsychHtmlKeyboardResponse,
+        stimulus: "<div><p>Please look at the</p><p><br>" + (condition.targetpattern_squares ? "SQUARES" : "TRIANGLES") + "</br></p></div>",
+        choice: ['ArrowRight'],
+        prompt: "press right arrow key to continue"
+    };
+
+    var closeUnity = { type: jsPsychCloseUnityPlugin };
+
+    const moot_parameters = {
+        doggelgaenger_col: condition.doppelgaenger_color_white ? "1,1,1" : "0,0,0",
+        doggelgaenger_loc: condition.doppelgaenger_up ? "20,0,-10" : "-20,0,-10",
+        doppelgaenger_target: condition.targetpattern_squares ? "SQ" : "TR",
+        go_notarget_left: 4,
+        go_notarget_right: 4,
+        go_target_left: 4,
+        go_target_right: 4,
+        nogo_type1_target_left: 1,
+        nogo_type1_target_right: 1,
+        doppelgaenger_anim_rec: experiment_config.record_doppelgaenger_animation,
+        other_anim_rec: experiment_config.record_other_animation,
+        mimicry_first_target_left: 1,
+        mimicry_second_notarget_left: 1,
+    };
+
+    const moot = {
+        type: jsPsychMootPlugin,
+        moot_parameters: moot_parameters,
+        extensions: [
+            { type: jsPsychUnityExtension },
+            { type: jsPsychExtensionRecordVideo },
+            {
+                type: jsPsychExtensionMediapipeFacemesh,
+                params: {
+                    useFaceLandmarker: true,
+                    record: true
+                }
+            },
+        ],
+    };
+
+    const timeline = [
+        initCamera,
+        enter_fullscreen,
+        debug_condition,
+        moot
+    ];
+
+    jsPsych.run(timeline);
+</script>
+
+</html>
