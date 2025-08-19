@@ -1,122 +1,151 @@
 <!DOCTYPE html>
-<html lang="en-us">
-  <head>
-    <meta charset="utf-8">
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-    <title>Unity WebGL Player | ovmf_web</title>
-    <link rel="shortcut icon" href="TemplateData/favicon.ico">
-    <link rel="stylesheet" href="TemplateData/style.css">
-  </head>
-  <body>
-    <div id="unity-container" class="unity-desktop">
-      <canvas id="unity-canvas" width=800 height=500></canvas>
-      <div id="unity-loading-bar">
-        <div id="unity-logo"></div>
-        <div id="unity-progress-bar-empty">
-          <div id="unity-progress-bar-full"></div>
-        </div>
-      </div>
-      <div id="unity-warning"> </div>
-      <div id="unity-footer">
-        <div id="unity-webgl-logo"></div>
-        <div id="unity-fullscreen-button"></div>
-        <div id="unity-build-title">ovmf_web</div>
-      </div>
-    </div>
-    <script>
-      var container = document.querySelector("#unity-container");
-      var canvas = document.querySelector("#unity-canvas");
-      var loadingBar = document.querySelector("#unity-loading-bar");
-      var progressBarFull = document.querySelector("#unity-progress-bar-full");
-      var fullscreenButton = document.querySelector("#unity-fullscreen-button");
-      var warningBanner = document.querySelector("#unity-warning");
+<html>
 
-      // Shows a temporary message banner/ribbon for a few seconds, or
-      // a permanent error message on top of the canvas if type=='error'.
-      // If type=='warning', a yellow highlight color is used.
-      // Modify or remove this function to customize the visually presented
-      // way that non-critical warnings and error messages are presented to the
-      // user.
-      function unityShowBanner(msg, type) {
-        function updateBannerVisibility() {
-          warningBanner.style.display = warningBanner.children.length ? 'block' : 'none';
+<head>
+    <title>CCSR Experiment 1</title>
+    <script src="https://unpkg.com/jspsych@7.3.1"></script>
+    <script src="https://unpkg.com/@jspsych/plugin-html-keyboard-response@1.1.2"></script>
+    <script src="https://unpkg.com/@jspsych/extension-record-video@1.0.1/dist/index.browser.js"></script>
+    <script src="https://unpkg.com/@jspsych/plugin-initialize-camera@1.0.1/dist/index.browser.js"></script>
+
+    <!-- NEU: lokales Plugin statt CDN-Version -->
+    <script src="jsPsych/mediapipe-extension/index.browser.js"></script>
+
+    <script src="https://unpkg.com/@jspsych/plugin-fullscreen@1.1.2"></script>
+    <script src="https://unpkg.com/@jspsych/plugin-html-slider-response@1.1.2"></script>
+    <script src="https://unpkg.com/@jspsych/plugin-preload@1.1.2"></script>
+    <script src="https://unpkg.com/@jspsych/plugin-video-keyboard-response@1.1.2"></script>
+    <script src="https://unpkg.com/@jspsych/plugin-survey-text@1.1.2"></script>
+    <script src="https://unpkg.com/@jspsych/plugin-html-button-response@1.1.2"></script>
+    <script src="jsPsych/plugin-nextcloud-filedrop.js"></script>
+    <script src="https://unpkg.com/jszip@3.10.1/dist/jszip.js"></script>
+    <script src="https://unpkg.com/@jspsych/plugin-call-function@1.1.2"></script>
+    <script src="https://unpkg.com/@jspsych/plugin-browser-check@1.0.2"></script>
+    <script src="jsPsych/extension-unity.js"></script>
+    <script src="jsPsych/plugin-moot.js"></script>
+    <script src="jsPsych/plugin-close-unity.js"></script>
+    <script src="jsPsych/plugin-calibration-camera.js"></script>
+    <script src="https://unpkg.com/@jspsych/plugin-image-keyboard-response@1.1.2"></script>
+    <script src="utils.js"></script>
+    <link href="https://unpkg.com/jspsych@7.3.1/css/jspsych.css" rel="stylesheet" type="text/css" />
+    <link href="experiment_1.css" rel="stylesheet" type="text/css" />
+</head>
+
+<body></body>
+
+<script>
+    // Zufällige Bedingungs-Parameter
+    var condition = {
+        targetpattern_squares: Math.random() < 0.5,
+        doppelgaenger_color_white: Math.random() < 0.5,
+        doppelgaenger_up: Math.random() < 0.5,
+        questionnaire_doppelgaenger_first: Math.random() < 0.5,
+    };
+
+    // Experimentkonfiguration
+    var experiment_config = {
+        record_doppelgaenger_animation: false,
+        record_other_animation: false,
+        record_mediapipe: true, // jetzt Mediapipe-Ergebnisse inkl. Blendshapes aufzeichnen
+    };
+
+    const jsPsych = initJsPsych({
+        extensions: [
+            {
+                type: jsPsychUnityExtension,
+                params: {
+                    loaderUrl: "./moot/build.loader.js",
+                    dataUrl: "./moot/build.data.unityweb",
+                    frameworkUrl: "./moot/build.framework.js.unityweb",
+                    codeUrl: "./moot/build.wasm.unityweb",
+                    width: "800px",
+                    height: "500px",
+                    waitEvent: 'JSPsychUnityReadyEvent'
+                }
+            },
+            {
+                type: jsPsychExtensionMediapipeFacemesh,
+                params: {
+                    useFaceLandmarker: true, // Neue API mit Blendshapes
+                    record: true              // Blendshape-Daten mitschreiben
+                }
+            },
+            { type: jsPsychExtensionRecordVideo },
+        ],
+        on_finish: function () {
+            jsPsych.data.displayData('json');
+            jsPsych.data.get().localSave('json', 'mydata.json');
         }
-        var div = document.createElement('div');
-        div.innerHTML = msg;
-        warningBanner.appendChild(div);
-        if (type == 'error') div.style = 'background: red; padding: 10px;';
-        else {
-          if (type == 'warning') div.style = 'background: yellow; padding: 10px;';
-          setTimeout(function() {
-            warningBanner.removeChild(div);
-            updateBannerVisibility();
-          }, 5000);
-        }
-        updateBannerVisibility();
-      }
+    });
 
-      var buildUrl = "Build";
-      var loaderUrl = buildUrl + "/build.loader.js";
-      var config = {
-        dataUrl: buildUrl + "/build.data.unityweb",
-        frameworkUrl: buildUrl + "/build.framework.js.unityweb",
-        codeUrl: buildUrl + "/build.wasm.unityweb",
-        symbolsUrl: buildUrl + "/build.symbols.json.unityweb",
-        streamingAssetsUrl: "StreamingAssets",
-        companyName: "Zuse Institure Berlin",
-        productName: "ovmf_web",
-        productVersion: "0.1",
-        showBanner: unityShowBanner,
-      };
+    // Allgemeine Properties
+    jsPsych.data.addProperties({
+        is_targetpattern_squares: condition.targetpattern_squares,
+        is_doppelgaenger_color_white: condition.doppelgaenger_color_white,
+        is_doppelgaenger_up: condition.doppelgaenger_up,
+        is_questionnaire_doppelgaenger_first: condition.questionnaire_doppelgaenger_first
+    });
 
-      // By default Unity keeps WebGL canvas render target size matched with
-      // the DOM size of the canvas element (scaled by window.devicePixelRatio)
-      // Set this to false if you want to decouple this synchronization from
-      // happening inside the engine, and you would instead like to size up
-      // the canvas DOM size and WebGL render target sizes yourself.
-      // config.matchWebGLToCanvasSize = false;
+    const initCamera = {
+        type: jsPsychInitializeCamera,
+        include_audio: false
+    };
 
-      if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
-        // Mobile device style: fill the whole browser client area with the game canvas:
+    const enter_fullscreen = {
+        type: jsPsychFullscreen,
+        fullscreen_mode: true,
+        message: '<p>The experiment will switch to full screen mode...</p>',
+    };
 
-        var meta = document.createElement('meta');
-        meta.name = 'viewport';
-        meta.content = 'width=device-width, height=device-height, initial-scale=1.0, user-scalable=no, shrink-to-fit=yes';
-        document.getElementsByTagName('head')[0].appendChild(meta);
-        container.className = "unity-mobile";
+    const debug_condition = {
+        type: jsPsychHtmlKeyboardResponse,
+        stimulus: "<div><p>Please look at the</p><p><br>" + (condition.targetpattern_squares ? "SQUARES" : "TRIANGLES") + "</br></p></div>",
+        choice: ['ArrowRight'],
+        prompt: "press right arrow key to continue"
+    };
 
-        // To lower canvas resolution on mobile devices to gain some
-        // performance, uncomment the following line:
-        // config.devicePixelRatio = 1;
+    var closeUnity = { type: jsPsychCloseUnityPlugin };
 
-        canvas.style.width = window.innerWidth + 'px';
-        canvas.style.height = window.innerHeight + 'px';
+    const moot_parameters = {
+        doggelgaenger_col: condition.doppelgaenger_color_white ? "1,1,1" : "0,0,0",
+        doggelgaenger_loc: condition.doppelgaenger_up ? "20,0,-10" : "-20,0,-10",
+        doppelgaenger_target: condition.targetpattern_squares ? "SQ" : "TR",
+        go_notarget_left: 4,
+        go_notarget_right: 4,
+        go_target_left: 4,
+        go_target_right: 4,
+        nogo_type1_target_left: 1,
+        nogo_type1_target_right: 1,
+        doppelgaenger_anim_rec: experiment_config.record_doppelgaenger_animation,
+        other_anim_rec: experiment_config.record_other_animation,
+        mimicry_first_target_left: 1,
+        mimicry_second_notarget_left: 1,
+    };
 
-        unityShowBanner('WebGL builds are not supported on mobile devices.');
-      } else {
-        // Desktop style: Render the game canvas in a window that can be maximized to fullscreen:
+    const moot = {
+        type: jsPsychMootPlugin,
+        moot_parameters: moot_parameters,
+        extensions: [
+            { type: jsPsychUnityExtension },
+            { type: jsPsychExtensionRecordVideo },
+            {
+                type: jsPsychExtensionMediapipeFacemesh,
+                params: {
+                    useFaceLandmarker: true,
+                    record: true
+                }
+            },
+        ],
+    };
 
-        canvas.style.width = "800px";
-        canvas.style.height = "500px";
-      }
+    const timeline = [
+        initCamera,
+        enter_fullscreen,
+        debug_condition,
+        moot
+    ];
 
-      loadingBar.style.display = "block";
+    jsPsych.run(timeline);
+</script>
 
-      var script = document.createElement("script");
-      script.src = loaderUrl;
-      script.onload = () => {
-        createUnityInstance(canvas, config, (progress) => {
-          progressBarFull.style.width = 100 * progress + "%";
-        }).then((unityInstance) => {
-          loadingBar.style.display = "none";
-          fullscreenButton.onclick = () => {
-            unityInstance.SetFullscreen(1);
-          };
-        }).catch((message) => {
-          alert(message);
-        });
-      };
-      document.body.appendChild(script);
-    </script>
-  </body>
 </html>
