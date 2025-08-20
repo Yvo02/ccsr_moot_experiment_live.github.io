@@ -28,12 +28,30 @@
     <script src="https://unpkg.com/@jspsych/plugin-image-keyboard-response@1.1.2"></script>
     <script src="utils.js"></script>
     <link href="https://unpkg.com/jspsych@7.3.1/css/jspsych.css" rel="stylesheet" type="text/css" />
-
     <link href="experiment_1.css" rel="stylesheet" type="text/css" />
-	<script src="moot/build.loader.js"></script>
 </head>
 
-<body></body>
+<body>
+  <div id="unityContainer" style="width: 960px; height: 600px; background: #000"></div>
+
+  <script src="moot/build.loader.js"></script>
+  <script>
+    // Wenn Unity Build fertig ist:
+    createUnityInstance(document.querySelector("#unityContainer"), {
+      dataUrl: "moot/build.data",
+      frameworkUrl: "moot/build.framework.js",
+      codeUrl: "moot/build.wasm",
+    }).then((unityInstance) => {
+      console.log("Unity ready", unityInstance);
+    }).catch((err) => {
+      console.error(err);
+    });
+  </script>
+</body>
+
+
+
+</body>
 
 <script>
 
